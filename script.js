@@ -4,23 +4,43 @@
 // Note that when running locally, in order to open a web page which uses modules, you must serve the directory over HTTP e.g. with https://www.npmjs.com/package/http-server
 // You can't open the index.html file using a file:// URL.
 
-// Import JSDOM to simulate a browser environment in Node.js
-import { JSDOM } from "jsdom";
 // Import the getUserIds function from storage.js to retrieve user IDs
 import { getUserIds } from "./storage.js";
 
 // -----------------------------------------------------------------------------------
 
-// Create a virtual DOM environment using JSDOM
-const dom = new JSDOM(`<!DOCTYPE html><body></body>`);
+document.addEventListener("DOMContentLoaded", () => {
+  const userSelect = document.getElementById("user-select");
 
-// Assign the virtual DOM objects to global variables
-// This makes Node.js behave like a browser
-global.window = dom.window; // Assigns window object
-global.document = dom.window.document; // Assigns document object
-global.navigator = dom.window.navigator; // Assigns navigator object
+  if (!userSelect) {
+    console.error("Dropdown element not found! Check index.html");
+    return;
+  }
 
-// -----------------------------------------------------------------------------------
+  const userIds = getUserIds(); // Call the function
 
-const userSelect = document.getElementById("user-select");
+  console.log("User IDs fetched:", userIds); // Debugging step
 
+  if (!userIds || userIds.length === 0) {
+    console.error("No users found! Check storage.js");
+    return;
+  }
+
+  // Create a default option
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "";
+  defaultOption.textContent = "Select a user";
+  defaultOption.disabled = true;
+  defaultOption.selected = true; // Ensures it stays selected initially
+  userSelect.appendChild(defaultOption);
+
+  // Add user options
+  userIds.forEach(userId => {
+     const option = document.createElement("option");
+     option.value = userId;
+     option.textContent = `User ${userId}`;
+     userSelect.appendChild(option);
+  });
+
+  console.log("Dropdown updated with users");
+});
