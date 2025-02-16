@@ -1,8 +1,31 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script type="module" src="script.js"></script>
   </head>
   <body>
+    <form>
+      <label for="user-select">select user:</label>
+      <select name="user" id="user-select">
+        <!-- options will dynamically rendered -->
+      </select>
+
+      <label for="url">enter URL:</label>
+      <input type="text" id="url" placeholder="please enter url">
+
+      <label for="description"> Description</label>
+      <textarea id="description" placeholder="Enter short description"></textarea>
+
+      <button type="submit">save</button>
+
+
+      <section id="saved-results">
+        <h2>Saved URLs</h2>
+        <ul id="results-list">
+          <!-- Dynamically rendered saved URLs and descriptions will appear here -->
+        </ul>
+      </section>
+    </form>
+
+    <script type="module" src="script.js"></script>
   </body>
 </html>
