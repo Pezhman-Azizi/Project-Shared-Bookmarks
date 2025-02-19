@@ -5,42 +5,125 @@
 // You can't open the index.html file using a file:// URL.
 
 // Import the getUserIds function from storage.js to retrieve user IDs
-import { getUserIds } from "./storage.js";
-
-// -----------------------------------------------------------------------------------
+import { getUserIds, getData, setData } from "./storage.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const userSelect = document.getElementById("user-select");
+  const resultsList = document.getElementById("results-list");
+  const form = document.querySelector("form");
+  const urlInput = document.getElementById("url");
+  const titleInput = document.getElementById("title");
+  const descriptionInput = document.getElementById("description");
 
-  if (!userSelect) {
-    console.error("Dropdown element not found! Check index.html");
+  if (!userSelect || !resultsList || !form) {
+    console.error("Required elements not found! Check index.html");
     return;
   }
 
-  const userIds = getUserIds(); // Call the function
-
-  console.log("User IDs fetched:", userIds); // Debugging step
-
-  if (!userIds || userIds.length === 0) {
-    console.error("No users found! Check storage.js");
-    return;
-  }
-
-  // Create a default option
-  const defaultOption = document.createElement("option");
-  defaultOption.value = "";
-  defaultOption.textContent = "Select a user";
-  defaultOption.disabled = true;
-  defaultOption.selected = true; // Ensures it stays selected initially
-  userSelect.appendChild(defaultOption);
-
-  // Add user options
+  // Populate dropdown with user IDs
+  const userIds = getUserIds();
   userIds.forEach(userId => {
-     const option = document.createElement("option");
-     option.value = userId;
-     option.textContent = `User ${userId}`;
-     userSelect.appendChild(option);
+    const option = document.createElement("option");
+    option.value = userId;
+    option.textContent = `User ${userId}`;
+    userSelect.appendChild(option);
   });
 
-  console.log("Dropdown updated with users");
+  // Function to display bookmarks for a selected user
+  function displayBookmarks(userId) {
+    resultsList.innerHTML = "";
+    const bookmarks = getData(userId);
+
+    if (!bookmarks || bookmarks.length === 0) {
+      resultsList.innerHTML = "<li>No bookmarks available for this user.</li>";
+      return;
+    }
+
+    bookmarks.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    bookmarks.forEach(bookmark => {
+      const { url, title, description, timestamp } = bookmark;
+
+      const listItem = document.createElement("li");
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.textContent = title;
+      link.target = "_blank";
+
+      const textNode = document.createTextNode(` - ${description} (Saved on: ${new Date(timestamp).toLocaleString()})`);
+
+      listItem.appendChild(link);
+      listItem.appendChild(textNode);
+      resultsList.appendChild(listItem);
+    });
+  }
+
+  // Event listener for user selection
+  userSelect.addEventListener("change", () => {
+    displayBookmarks(userSelect.value);
+  });
+
+  // Event listener for form submission (adds a new bookmark)
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const selectedUserId = userSelect.value;
+    if (!selectedUserId) {
+      alert("Please select a user before submitting a bookmark");
+      return;
+    }
+
+    const url = urlInput.value.trim();
+    const title = titleInput.value.trim();
+    const description = descriptionInput.value.trim();
+
+    if (!url) {
+      alert("URL cannot be empty");
+      return;
+    }
+
+    // Validate URL format
+    try {
+      new URL(url);
+    } catch (e) {
+      alert("Invalid URL format. Please enter a valid URL.");
+      return;
+    }
+
+    if (!title) {
+      alert("Title cannot be empty");
+      return;
+    }
+
+    if (!description) {
+      alert("Description cannot be empty");
+      return;
+    }
+
+    let bookmarks = getData(selectedUserId) || [];
+
+    // Prevent duplicate bookmarks before storing
+    if (bookmarks.some(bookmark => bookmark.url === url)) {
+      alert("This bookmark already exists!");
+      return;
+    }
+
+    const newBookmark = {
+      url,
+      title,
+      description,
+      timestamp: new Date().toISOString()
+    };
+
+    bookmarks.push(newBookmark);
+    setData(selectedUserId, bookmarks);
+
+    // Clear inputs
+    urlInput.value = "";
+    titleInput.value = "";
+    descriptionInput.value = "";
+
+    displayBookmarks(selectedUserId);
+  });
 });
